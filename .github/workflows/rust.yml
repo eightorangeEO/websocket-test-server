@@ -9,57 +9,17 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build-in-ubuntu:
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Set up Rust
-      uses: actions-rs/toolchain@v1
-      with:
-        toolchain: stable
-
-    - name: Install cargo-bump
-      run: cargo install cargo-bump
-
-    - name: Bump version
-      run: cargo bump patch # 或者使用 `minor` 或 `major` 根据需要
-
-    - name: Build
-      run: cargo build --verbose --release
-
-    - name: Run tests
-      run: cargo test --verbose
-
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: v${{ steps.bump_version.outputs.new_version }}
-        release_name: Release v${{ steps.bump_version.outputs.new_version }}
-        draft: false
-        prerelease: false
-
-
-  build-in-windows:
+  build:
     runs-on: windows-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v3
 
-    - name: Set up Rust
+    - name: Install Rust
       uses: actions-rs/toolchain@v1
       with:
         toolchain: stable
-
-    - name: Install cargo-bump
-      run: cargo install cargo-bump
-
-    - name: Bump version
-      run: cargo bump patch # 或者使用 `minor` 或 `major` 根据需要
+        override: true
 
     - name: Build
       run: cargo build --verbose --release
@@ -67,13 +27,11 @@ jobs:
     - name: Run tests
       run: cargo test --verbose
 
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: v${{ steps.bump_version.outputs.new_version }}
-        release_name: Release v${{ steps.bump_version.outputs.new_version }}
-        draft: false
-        prerelease: false
+    # 如果需要设置输出变量，使用新的语法
+    - name: Set output
+      id: set-version
+      run: echo "version=$(cargo pkgid | cut -d# -f2)" >> $GITHUB_OUTPUT
+
+    # 如果需要保存状态，使用新的语法
+    - name: Save state
+      run: echo "some_state=value" >> $GITHUB_STATE
