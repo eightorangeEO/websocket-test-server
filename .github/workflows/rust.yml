@@ -9,7 +9,7 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
+  build-in-ubuntu:
     runs-on: ubuntu-latest
 
     steps:
@@ -43,13 +43,37 @@ jobs:
         draft: false
         prerelease: false
 
-    - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1
+
+  build-in-windows:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+
+    - name: Install cargo-bump
+      run: cargo install cargo-bump
+
+    - name: Bump version
+      run: cargo bump patch # 或者使用 `minor` 或 `major` 根据需要
+
+    - name: Build
+      run: cargo build --verbose --release
+
+    - name: Run tests
+      run: cargo test --verbose
+
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: target/release/your_executable # 替换为实际的可执行文件路径
-        asset_name: your_executable
-        asset_content_type: application/octet-stream
-
+        tag_name: v${{ steps.bump_version.outputs.new_version }}
+        release_name: Release v${{ steps.bump_version.outputs.new_version }}
+        draft: false
+        prerelease: false
